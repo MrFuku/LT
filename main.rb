@@ -1,19 +1,20 @@
-res = []
-ARGV.each do |arg|
-  require 'net/http'
-  a = Net::HTTP.get(URI.parse('https://gasyuku-api.herokuapp.com/users/' + arg))
-  require 'json'
-  a = JSON.parse(a)
-  a['subscribed_shop_ids'].each do |id|
-    b = Net::HTTP.get(URI.parse('https://gasyuku-api.herokuapp.com/shops/' + id.to_s))
-    if a['shops'] == nil
-      a['shops'] = []
+require 'net/http'
+require 'json'
+
+API_URL = 'https://gasyuku-api.herokuapp.com'.freeze
+
+def main
+  res = ARGV.map do |arg|
+    user = JSON.parse(Net::HTTP.get(URI.parse("#{API_URL}/users/#{arg}")), symbolize_names: true)
+    user[:shops] = user[:subscribed_shop_ids].map do |id|
+      JSON.parse(Net::HTTP.get(URI.parse("#{API_URL}/shops/#{id}")), symbolize_names: true)
     end
-    a['shops'].push(JSON.parse(b))
+    user
   end
-  res << a
+  JSON.dump(res)
 end
-puts JSON.dump(res)
+
+puts main
 
 # 実行例
 # 
